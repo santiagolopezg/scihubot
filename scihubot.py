@@ -34,6 +34,7 @@ account_user_id = ''
 class ReplyToTweet(StreamListener):
 
     def on_data(self, data):
+        print data
         tweet = json.loads(data.strip())
         
         retweeted = tweet.get('retweeted')
@@ -45,25 +46,26 @@ class ReplyToTweet(StreamListener):
             tweetId = tweet.get('id_str')
             screenName = tweet.get('user',{}).get('screen_name')
             tweetText = tweet.get('text')
+            print tweetText
             
             tweetText = tweetText.split(' ')
             tweetText = tweetText[len(tweetText)-1]
             
-            
-            ## process the tweeted text
-            
-            tweetText = tweetText.strip('DOI:')
-            tweetText = tweetText.strip('doi:')
-            tweetText = tweetText.strip('Doi:')
-            
-            if 'http' in tweetText:
-            	tweetText = tweetText.split('org/')[1]
+            if 'http' in tweetText: # e.g. https://t.co/xQwRV8tQwk
+            	print tweetText
+            	session = requests.Session()
+            	resp = session.head(tweetText, allow_redirects=True)
+            	tweetText = resp.url
+            	print tweetText
             else:
-            	pass
-            	
+				tweetText = tweetText.strip('DOI:')
+				tweetText = tweetText.strip('doi:')
+				tweetText = tweetText.strip('Doi:')
+				
             print tweetText                        
             
-            if 'http' not in tweetText:
+            if 'http' in tweetText or 'doi' not in tweetText:
+            
             	## it has DOI or link in it
             	try:
 					paper, link = navigate_web(url, tweetText)
@@ -86,13 +88,15 @@ class ReplyToTweet(StreamListener):
         print status, 'shit'
 
 
+
+
 def navigate_web(url, user_input):
 	# takes a paper's DOI or URL and downloads pdf locally. Also returns DOI
 	# say, the DOI is 10.1126/science.aao5167, or the URL is http://science.sciencemag.org/content/359/6373/343/tab-pdf
 	
 	query = url+user_input
 	html = urllib2.urlopen(query).read()
-	
+
 	q = html[html.find('<iframe src = "')+15:html.find('.pdf')+4]
 	
 	if 'http' not in q:
@@ -117,12 +121,12 @@ def navigate_web(url, user_input):
 
 	process = subprocess.Popen(comm.split(), stdout=subprocess.PIPE)
 	output, error = process.communicate()
+
 	link = output.split('"key":')[1][1:7]
 	
 	print link
 	return doi, link
 	
-
 while True:
     streamListener = ReplyToTweet()
     twitterStream = Stream(auth, streamListener)
