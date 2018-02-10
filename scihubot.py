@@ -51,19 +51,25 @@ class ReplyToTweet(StreamListener):
             tweetText = tweetText.split(' ')[1]
                         
             
-            if '/' in tweetText or '.' in tweetText:
-            	## it has DOI in it
-            	paper, link = navigate_web(url, tweetText)
-           
-				
-            	replyText = 'Hi @' + screenName + ', here you go! ' + '#https://file.io/'+ link + ' (copy+paste link w/o #)'
-            	print('Tweet ID: ' + tweetId)
-            	print('From: ' + screenName)
-            	print('Tweet Text: ' + tweetText)
-            	print('Reply Text: ' + replyText)
-
-            	twitterApi.update_status(status=replyText, in_reply_to_status_id=tweetId)
-				
+            if 'http' not in tweetText:
+            	## it has DOI or link in it
+            	try:
+					paper, link = navigate_web(url, tweetText)
+		   
+					replyText = 'Hi @' + screenName + ', here you go! ' + '#https://file.io/'+ link + ' (copy+paste link w/o #)'
+					
+					print('Tweet ID: ' + tweetId)
+					print('From: ' + screenName)
+					print('Tweet Text: ' + tweetText)
+					print('Reply Text: ' + replyText)
+					
+					twitterApi.update_status(status=replyText, in_reply_to_status_id=tweetId)
+					print 'removing paper from local dir...'
+					os.remove('{0}.pdf'.format(paper))
+					
+            	except:
+					pass
+			
     def on_error(self, status):
         print status, 'shit'
 
@@ -74,6 +80,8 @@ def navigate_web(url, user_input):
 	query = url+user_input
 	html = urllib2.urlopen(query).read()
 	
+	print 'begin html:'
+	
 	q = html[html.find('<iframe src = "')+15:html.find('.pdf')+4]
 	
 	if 'http' not in q:
@@ -82,6 +90,7 @@ def navigate_web(url, user_input):
 	doi = q.split('.pdf')[0]
 	doi = doi.split('/')
 	doi = doi[len(doi)-1]
+	print doi 
 	
 	
 	r = requests.get(q)
@@ -89,19 +98,14 @@ def navigate_web(url, user_input):
 	with open('{0}.pdf'.format(doi), 'wb') as f:
 		f.write(r.content)
 	
-	## now I have the file locally, I should store it on expirebox.com and have it give me a download link 
-	
 	comm = 'curl -F file=@{0} https://file.io/?expires=1w'.format(doi+'.pdf')
 
 	process = subprocess.Popen(comm.split(), stdout=subprocess.PIPE)
 	output, error = process.communicate()
+
 	link = output.split('"key":')[1][1:7]
-	print 'removing paper from local dir...'
-	os.remove('{0}.pdf'.format(doi))
-    
-	return doi, link
 	
-# now we have the PDF stored locally and also the DOI, we can send it off to our friend
+	return doi, link
 
 while True:
     streamListener = ReplyToTweet()
