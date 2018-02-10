@@ -34,7 +34,6 @@ account_user_id = ''
 class ReplyToTweet(StreamListener):
 
     def on_data(self, data):
-        print data
         tweet = json.loads(data.strip())
         
         retweeted = tweet.get('retweeted')
@@ -46,10 +45,23 @@ class ReplyToTweet(StreamListener):
             tweetId = tweet.get('id_str')
             screenName = tweet.get('user',{}).get('screen_name')
             tweetText = tweet.get('text')
-            print tweetText
             
-            tweetText = tweetText.split(' ')[1]
-                        
+            tweetText = tweetText.split(' ')
+            tweetText = tweetText[len(tweetText)-1]
+            
+            
+            ## process the tweeted text
+            
+            tweetText = tweetText.strip('DOI:')
+            tweetText = tweetText.strip('doi:')
+            tweetText = tweetText.strip('Doi:')
+            
+            if 'http' in tweetText:
+            	tweetText = tweetText.split('org/')[1]
+            else:
+            	pass
+            	
+            print tweetText                        
             
             if 'http' not in tweetText:
             	## it has DOI or link in it
@@ -73,20 +85,21 @@ class ReplyToTweet(StreamListener):
     def on_error(self, status):
         print status, 'shit'
 
+
 def navigate_web(url, user_input):
-	# takes a paper's DOI and downloads pdf locally. Also returns DOI
+	# takes a paper's DOI or URL and downloads pdf locally. Also returns DOI
 	# say, the DOI is 10.1126/science.aao5167, or the URL is http://science.sciencemag.org/content/359/6373/343/tab-pdf
 	
 	query = url+user_input
 	html = urllib2.urlopen(query).read()
 	
-	print 'begin html:'
-	
 	q = html[html.find('<iframe src = "')+15:html.find('.pdf')+4]
 	
 	if 'http' not in q:
 		q = 'http:' + q
-		
+	
+	print 'request link:', q # should be like http://sci-hub.tw/saveme/e8dc/10.1126@science.aao5167.pdf
+	
 	doi = q.split('.pdf')[0]
 	doi = doi.split('/')
 	doi = doi[len(doi)-1]
@@ -98,14 +111,17 @@ def navigate_web(url, user_input):
 	with open('{0}.pdf'.format(doi), 'wb') as f:
 		f.write(r.content)
 	
+	## now I have the file locally, I should store it on expirebox.com and have it give me a download link 
+	
 	comm = 'curl -F file=@{0} https://file.io/?expires=1w'.format(doi+'.pdf')
 
 	process = subprocess.Popen(comm.split(), stdout=subprocess.PIPE)
 	output, error = process.communicate()
-
 	link = output.split('"key":')[1][1:7]
 	
+	print link
 	return doi, link
+	
 
 while True:
     streamListener = ReplyToTweet()
