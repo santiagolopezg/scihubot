@@ -50,7 +50,7 @@ Once you have the app running, you can remotely check the logs (`heroku logs --p
 Say that you've come across a super interesting paper, but oh bad luck, it's behind a paywall! No worries, just tweet at your friendly bot.     
 For the time being, tweets must have this structure:     
 `@scihubot _your_DOI_` or `@scihubot _your_papers_url_`      
-The bot will reply prompty, with a hashed file.io link (i.e. `#file.io/abc123`), which you will have to copy+paste into your browser to start the downloads. For the sake of swiftness, the links expire as soon as they're used. I'm sure that if you want a re-usable link, you could find another file-hosting domain.      
+The bot will reply prompty, with a hashed [file.io](https://www.file.io/#one) link (i.e. `#file.io/abc123`), which you will have to copy+paste into your browser to start the downloads. For the sake of swiftness, the links expire as soon as they're used. I'm sure that if you want a re-usable link, you could find another file-hosting domain.      
 Support for books, which requires libgen access, is available, although in trial. So for the moment, the bot supports access to papers and books through DOI and direct urls. 
 
 ## Deployment
