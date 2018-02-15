@@ -70,7 +70,7 @@ As mentioned previously, I've deployed the app on Heroku, but there are plenty o
 
 ## Contributing
 
-Feel free to fork the repo to contribute to it, or clone it if you want to deploy your own sci-hub bot. The more the merrier!     
+Feel free to fork the repo to contribute to it, or clone it if you want to deploy your own bot. The more the merrier - however, you should be aware of the possible implications of running the code and associating with sci-hub, and my discharge of responsibilities regarding them (read the licence).              
 
 ## Acknowledgments
 
