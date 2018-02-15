@@ -96,42 +96,44 @@ class ReplyToTweet(StreamListener):
 
 
 def navigate_web(url, user_input):
-	# takes a paper's DOI or URL and downloads pdf locally. Also returns DOI
-	# say, the DOI is 10.1126/science.aao5167, or the URL is http://science.sciencemag.org/content/359/6373/343/tab-pdf
-	
-	query = url+user_input
-	html = urllib2.urlopen(query).read()
-	
-	q = html[html.find('<iframe src = "')+15:html.find('.pdf')+4]		
-	
-	## if the bot can't find the paper:
-	if len(q) == 0:
-		return 0, 0
-	
-	
-	## if it found the paper, the link, but somehow the http is missing:
-	if 'http' not in q:
-		q = 'http:' + q
-		
-	doi = q.split('.pdf')[0]
-	doi = doi.split('/')
-	doi = doi[len(doi)-1]
-	print doi 
-	
-	## if it's a book, not a paper:
-	if 'libgen.io' in html:
-		p = html.split("Title: </font></nobr></td><td colspan=2><b><a href='")[1].split("'>")[0]
-		doi = p.split('=')[1]
-		html = urllib2.urlopen(p).read()
-		q= html.split("<td align='center' rowspan=2 valign='top'><a href='")[1].split("'><h2>GET</h2>")[0]		
-		print q, doi
-	
-	print 'request link:', q # should be like http://sci-hub.tw/saveme/e8dc/10.1126@science.aao5167.pdf
-	
+
 	size = 0
 	
 	while size < 1820: # sometimes, a limit is reached and a captcha has to be filled in -
 						# in that case, the file generated will be damaged and about 1820
+
+		# takes a paper's DOI or URL and downloads pdf locally. Also returns DOI
+		# say, the DOI is 10.1126/science.aao5167, or the URL is http://science.sciencemag.org/content/359/6373/343/tab-pdf
+	
+		query = url+user_input
+		html = urllib2.urlopen(query).read()
+	
+		q = html[html.find('<iframe src = "')+15:html.find('.pdf')+4]		
+	
+		## if the bot can't find the paper:
+		if len(q) == 0:
+			return 0, 0
+	
+	
+		## if it found the paper, the link, but somehow the http is missing:
+		if 'http' not in q:
+			q = 'http:' + q
+		
+		doi = q.split('.pdf')[0]
+		doi = doi.split('/')
+		doi = doi[len(doi)-1]
+		print doi 
+	
+		## if it's a book, not a paper:
+		if 'libgen.io' in html:
+			p = html.split("Title: </font></nobr></td><td colspan=2><b><a href='")[1].split("'>")[0]
+			doi = p.split('=')[1]
+			html = urllib2.urlopen(p).read()
+			q= html.split("<td align='center' rowspan=2 valign='top'><a href='")[1].split("'><h2>GET</h2>")[0]		
+			print q, doi
+	
+		print 'request link:', q # should be like http://sci-hub.tw/saveme/e8dc/10.1126@science.aao5167.pdf
+	
 		r = requests.get(q)
 		
 		time.sleep(10) ## I realised that sometimes the requests weren't fetched correctly, and the PDF files
