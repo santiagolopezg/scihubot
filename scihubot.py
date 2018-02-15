@@ -94,6 +94,7 @@ class ReplyToTweet(StreamListener):
     def on_error(self, status):
         print status, 'shit'
 
+
 def navigate_web(url, user_input):
 	# takes a paper's DOI or URL and downloads pdf locally. Also returns DOI
 	# say, the DOI is 10.1126/science.aao5167, or the URL is http://science.sciencemag.org/content/359/6373/343/tab-pdf
@@ -107,6 +108,7 @@ def navigate_web(url, user_input):
 	if len(q) == 0:
 		return 0, 0
 	
+	
 	## if it found the paper, the link, but somehow the http is missing:
 	if 'http' not in q:
 		q = 'http:' + q
@@ -118,36 +120,39 @@ def navigate_web(url, user_input):
 	
 	## if it's a book, not a paper:
 	if 'libgen.io' in html:
-		print 'its a boooook'
 		p = html.split("Title: </font></nobr></td><td colspan=2><b><a href='")[1].split("'>")[0]
 		doi = p.split('=')[1]
-		
 		html = urllib2.urlopen(p).read()
-		q= html.split("<td align='center' rowspan=2 valign='top'><a href='")[1].split("'><h2>GET</h2>")[0]
+		q= html.split("<td align='center' rowspan=2 valign='top'><a href='")[1].split("'><h2>GET</h2>")[0]		
 		print q, doi
 	
 	print 'request link:', q # should be like http://sci-hub.tw/saveme/e8dc/10.1126@science.aao5167.pdf
-
-	r = requests.get(q)
+	
+	size = 0
+	
+	while size < 1820: # sometimes, a limit is reached and a captcha has to be filled in -
+						# in that case, the file generated will be damaged and about 1820
+		r = requests.get(q)
 		
-	time.sleep(10) ## I realised that sometimes the requests weren't fetched correctly, and the PDF files
-				   ## ended up damaged. Adding a sleeping period seems to help in guaranteeing file integrity
+		time.sleep(10) ## I realised that sometimes the requests weren't fetched correctly, and the PDF files
+					   ## ended up damaged. Adding a sleeping period seems to help in guaranteeing file integrity
 	
-	
-	with open('{0}.pdf'.format(doi), 'wb') as f:
-		f.write(r.content)
-	
-	print os.stat('{0}.pdf'.format(doi)).st_size
+		with open('{0}.pdf'.format(doi), 'wb') as f:
+			f.write(r.content)
+			
+		size = os.stat('{0}.pdf'.format(doi)).st_size		
+		if size < 1820: # give the server time to overcome the limit and stop requesting the captcha
+			time.sleep(30)
 	
 	comm = 'curl -F file=@{0} https://file.io/?expires=1w'.format(doi+'.pdf')
+
 	process = subprocess.Popen(comm.split(), stdout=subprocess.PIPE)
 	output, error = process.communicate()
 	link = output.split('"key":')[1][1:7]
-	
-	print link
 	return doi, link
 
 while True:
     streamListener = ReplyToTweet()
     twitterStream = Stream(auth, streamListener)
     twitterStream.userstream(_with='user')
+
